@@ -1,7 +1,5 @@
+import 'package:db_example/routes/app_routes.dart';
 import 'package:flutter/material.dart';
-
-import 'db_helper.dart';
-import 'notes_add_update.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,146 +11,76 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'DB Example',
-      theme: ThemeData(
+      title: 'Notes App',
+      themeMode: ThemeMode.dark,
+      debugShowCheckedModeBanner: false,
+      darkTheme: ThemeData(
+        fontFamily: "Roboto",
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
+        scaffoldBackgroundColor: Colors.black12,
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.transparent,
+          toolbarHeight: 80,
+        ),
+        iconTheme: IconThemeData(color: Colors.white, size: 20),
+        floatingActionButtonTheme: FloatingActionButtonThemeData(
+          backgroundColor: const Color.fromARGB(255, 53, 51, 51),
+          elevation: 5,
+          foregroundColor: Colors.white,
+          iconSize: 30,
+        ),
+        textTheme: TextTheme(
+          displayLarge: TextStyle(
+            fontSize: 35,
+            fontWeight: FontWeight.w600,
+            color: Color.fromARGB(255, 75, 73, 73),
+          ),
+          displayMedium: TextStyle(
+            fontSize: 32,
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+          displaySmall: TextStyle(
+            fontSize: 20,
+            color: Colors.black,
+            fontWeight: FontWeight.w500,
+          ),
+          titleMedium: TextStyle(
+            color: Colors.white,
+            fontSize: 26,
+            fontWeight: FontWeight.w500,
+          ),
+          titleSmall: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.w500,
+          ),
+          labelMedium: TextStyle(
+            fontSize: 16,
+            color: Colors.white,
+            fontWeight: FontWeight.w400,
+          ),
+          labelSmall: TextStyle(
+            fontSize: 14,
+            color: const Color.fromARGB(255, 213, 190, 190),
+            fontWeight: FontWeight.w400,
+          ),
+          bodyLarge: TextStyle(
+            fontSize: 35,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+            height: 1.2,
+          ),
+          bodyMedium: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w500,
+            color: Color.fromARGB(255, 75, 73, 73),
+          ),
+        ),
       ),
-      home: HomePage(),
-    );
-  }
-}
-
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
-
-  @override
-  State<HomePage> createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
-  DBHelper? dbHelper;
-  List<Map<String, dynamic>> mNotes = [];
-
-  @override
-  void initState() {
-    super.initState();
-    dbHelper = DBHelper.getInstance();
-    getAllNotes();
-  }
-
-  getAllNotes() async {
-    mNotes = await dbHelper!.fetchAllNotes();
-    setState(() {});
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Notes')),
-      body:
-          mNotes.isNotEmpty
-              ? ListView.builder(
-                itemCount: mNotes.length,
-                shrinkWrap: true,
-                itemBuilder: (_, index) {
-                  return ListTile(
-                    title: Text(mNotes[index]["note_title"] ?? ""),
-                    subtitle: Text(mNotes[index]["note_desc"] ?? ""),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          onPressed: () {
-                            showDialog(
-                              context: context,
-                              barrierDismissible: false,
-                              builder: (context) {
-                                return Dialog(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: NotesAddUpdate(
-                                    isAdding: false,
-                                    oldTitle: mNotes[index]["note_title"],
-                                    oldDesc: mNotes[index]["note_desc"],
-                                    onAddUpdate: (title, desc) {
-                                      if (title.isEmpty && desc.isEmpty) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              "Please enter values.",
-                                            ),
-                                            duration: Duration(seconds: 2),
-                                          ),
-                                        );
-                                        return;
-                                      }
-                                      dbHelper!.updateNote(
-                                        noteId: mNotes[index]["note_id"],
-                                        title: title,
-                                        desc: desc,
-                                      );
-                                      getAllNotes();
-                                      Navigator.of(context).pop();
-                                    },
-                                  ),
-                                );
-                              },
-                            );
-                          },
-                          icon: Icon(Icons.edit, color: Colors.green),
-                        ),
-                        IconButton(
-                          onPressed: () {
-                            dbHelper!.deleteNote(
-                              noteId: mNotes[index]["note_id"],
-                            );
-                            getAllNotes();
-                          },
-                          icon: Icon(Icons.delete, color: Colors.red),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              )
-              : Center(child: Text("No Notes yet!!")),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (context) {
-              return Dialog(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: NotesAddUpdate(
-                  isAdding: true,
-                  onAddUpdate: (title, desc) {
-                    if (title.isEmpty && desc.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text("Please enter values."),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                      return;
-                    }
-                    dbHelper!.addNote(title: title, desc: desc);
-                    getAllNotes();
-                    Navigator.of(context).pop();
-                  },
-                ),
-              );
-            },
-          );
-        },
-        child: Icon(Icons.add),
-      ),
+      initialRoute: AppRoutes.splash,
+      onGenerateRoute: AppRoutes.generateRoutes,
     );
   }
 }
