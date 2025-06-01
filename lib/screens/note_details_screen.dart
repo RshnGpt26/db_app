@@ -1,27 +1,16 @@
+import 'package:db_example/providers/notes_provider.dart';
 import 'package:db_example/widgets/app_button.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 import '../routes/app_routes.dart';
 import '../services/db_helper.dart';
 
-class NoteDetailsScreen extends StatefulWidget {
-  const NoteDetailsScreen({super.key, required this.note});
+class NoteDetailsScreen extends StatelessWidget {
+  const NoteDetailsScreen({super.key, required this.index});
 
-  final Map<String, dynamic> note;
-
-  @override
-  State<NoteDetailsScreen> createState() => _NoteDetailsScreenState();
-}
-
-class _NoteDetailsScreenState extends State<NoteDetailsScreen> {
-  DBHelper? dbHelper;
-
-  @override
-  void initState() {
-    super.initState();
-    dbHelper = DBHelper.getInstance();
-  }
+  final int index;
 
   @override
   Widget build(BuildContext context) {
@@ -36,31 +25,27 @@ class _NoteDetailsScreenState extends State<NoteDetailsScreen> {
           },
         ),
         actions: [
-          AppButton(
-            icon: Icons.edit,
-            onPressed: () async {
-              Navigator.of(context).pushNamed(
-                AppRoutes.noteAddUpdate,
-                arguments: {
-                  "isAdding": false,
-                  "onSaveClick": (String title, String desc) async {
-                    if (title.trim().isEmpty && desc.trim().isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text("Please enter values."),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                      return;
-                    }
-                    await dbHelper!.updateNote(
-                      noteId: widget.note[DBHelper.noteIDColumn],
-                      title: title.trim(),
-                      desc: desc.trim(),
-                    );
-                  },
-                  "oldTitle": widget.note[DBHelper.noteTitleColumn],
-                  "oldDesc": widget.note[DBHelper.noteDescColumn],
+          Consumer<NotesProvider>(
+            builder: (context, provider, __) {
+              return AppButton(
+                icon: Icons.edit,
+                onPressed: () async {
+                  Navigator.of(context).pushNamed(
+                    AppRoutes.noteAddUpdate,
+                    arguments: {
+                      "isAdding": false,
+                      "onSaveClick": (String title, String desc) async {
+                        provider.onUpdateSave(
+                          context,
+                          index: index,
+                          title: title,
+                          desc: desc,
+                        );
+                      },
+                      "oldTitle": provider.note[DBHelper.noteTitleColumn],
+                      "oldDesc": provider.note[DBHelper.noteDescColumn],
+                    },
+                  );
                 },
               );
             },
@@ -71,35 +56,40 @@ class _NoteDetailsScreenState extends State<NoteDetailsScreen> {
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                widget.note[DBHelper.noteTitleColumn] ?? "",
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-              SizedBox(height: 10),
-              Text(
-                DateFormat('MMMM d, y')
-                    .format(
-                      DateTime.fromMillisecondsSinceEpoch(
-                        int.parse(
-                          widget.note[DBHelper.noteUpdatedAtColumn] ?? "0",
-                        ),
-                      ),
-                    )
-                    .toString(),
-                style: Theme.of(context).textTheme.labelSmall,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                softWrap: true,
-              ),
-              SizedBox(height: 10),
-              Text(
-                widget.note[DBHelper.noteDescColumn] ?? "",
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
-            ],
+          child: Consumer<NotesProvider>(
+            builder: (context, provider, _) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    provider.note[DBHelper.noteTitleColumn] ?? "",
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                  SizedBox(height: 10),
+                  Text(
+                    DateFormat('MMMM d, y')
+                        .format(
+                          DateTime.fromMillisecondsSinceEpoch(
+                            int.parse(
+                              provider.note[DBHelper.noteUpdatedAtColumn] ??
+                                  "0",
+                            ),
+                          ),
+                        )
+                        .toString(),
+                    style: Theme.of(context).textTheme.labelSmall,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    softWrap: true,
+                  ),
+                  SizedBox(height: 10),
+                  Text(
+                    provider.note[DBHelper.noteDescColumn] ?? "",
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ),

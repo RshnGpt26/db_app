@@ -29,8 +29,10 @@ class AppRoutes {
               ),
         );
       case noteDetailsScreen:
-        final args = settings.arguments as Map<String, dynamic>;
-        return MaterialPageRoute(builder: (_) => NoteDetailsScreen(note: args));
+        final args = settings.arguments as int;
+        return MaterialPageRoute(
+          builder: (_) => NoteDetailsScreen(index: args),
+        );
       default:
         return MaterialPageRoute(
           builder:
